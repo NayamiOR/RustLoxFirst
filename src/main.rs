@@ -1,7 +1,10 @@
-mod token;
+mod ast_printer;
+mod expr;
 mod scanner;
+mod token;
 mod token_type;
 
+use expr::Expr;
 use scanner::Scanner;
 use token::Token;
 
@@ -39,7 +42,9 @@ impl Lox {
             let mut line = String::new();
             std::io::stdin().read_line(&mut line)?;
             Self::run(line);
-            unsafe { LOX.had_error = false; }
+            unsafe {
+                LOX.had_error = false;
+            }
         }
     }
 
@@ -58,6 +63,8 @@ impl Lox {
 
     pub fn report(line: i32, location: &str, message: &str) {
         eprintln!("[line {}] Error {}: {}", line, location, message);
-        unsafe { LOX.had_error = true; }
+        unsafe {
+            LOX.had_error = true;
+        }
     }
 }

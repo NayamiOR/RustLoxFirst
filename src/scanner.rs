@@ -115,9 +115,14 @@ impl Scanner {
         while Scanner::is_alphanumeric(self.peek()) {
             self.advance();
         }
-        let text:String=self.source[self.start as usize..self.current as usize].to_string();
-        let token_type = Keywords.get(&text).unwrap_or(&IDENTIFIER);
-        self.add_token(IDENTIFIER);
+        let text = &self.source[self.start as usize..self.current as usize];
+        let token_type = *Keywords.get(text).unwrap_or(&IDENTIFIER);
+        match token_type {
+            TRUE => self.add_token_with_literal(TRUE, Some(Literal::Bool(true))),
+            FALSE => self.add_token_with_literal(FALSE, Some(Literal::Bool(false))),
+            NIL => self.add_token_with_literal(NIL, Some(Literal::Nil)),
+            _ => self.add_token(token_type),
+        }
     }
     fn string(&mut self) {
         while self.peek() != '"' && !self.is_at_end() {
