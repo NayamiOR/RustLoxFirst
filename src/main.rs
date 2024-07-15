@@ -3,6 +3,7 @@ mod expr;
 mod scanner;
 mod token;
 mod token_type;
+mod parser;
 
 use expr::Expr;
 use scanner::Scanner;
@@ -14,45 +15,17 @@ struct Lox {
 
 static mut LOX: Lox = Lox { had_error: false };
 
-// fn main() {
-//     let args: Vec<String> = std::env::args().collect();
-//     if args.len() > 2 {
-//         println!("Usage: rlox [script]");
-//         std::process::exit(64);
-//     } else if args.len() == 2 {
-//         Lox::run_file(args[1].clone());
-//     } else {
-//         Lox::run_prompt();
-//     }
-// }
 
 fn main() {
-    let expression=Expr::Binary{
-        left: Box::new(Expr::Unary{
-            operator: Token{
-                token_type: token_type::TokenType::MINUS,
-                lexeme: String::from("-"),
-                literal: None,
-                line: 1,
-            },
-            right: Box::new(Expr::Literal{
-                value: token::Literal::Number(123.0),
-            }),
-        }),
-        operator: Token{
-            token_type: token_type::TokenType::STAR,
-            lexeme: String::from("*"),
-            literal: None,
-            line: 1,
-        },
-        right: Box::new(Expr::Grouping{
-            expression: Box::new(Expr::Literal{
-                value: token::Literal::Number(45.67),
-            }),
-        }),
-    };
-    let printer=ast_printer::ExprVisitor;
-    println!("{}", printer.print(&expression));
+    let args: Vec<String> = std::env::args().collect();
+    if args.len() > 2 {
+        println!("Usage: rlox [script]");
+        std::process::exit(64);
+    } else if args.len() == 2 {
+        Lox::run_file(args[1].clone());
+    } else {
+        Lox::run_prompt();
+    }
 }
 
 impl Lox {
