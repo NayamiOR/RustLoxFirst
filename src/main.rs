@@ -5,7 +5,6 @@ mod token;
 mod token_type;
 mod parser;
 
-use expr::Expr;
 use scanner::Scanner;
 use token::Token;
 
@@ -52,21 +51,32 @@ impl Lox {
 
     pub fn run(source: String) {
         let mut scanner = Scanner::new(source);
-        let tokens: &Vec<Token> = scanner.scan_tokens();
-
-        for token in tokens {
-            println!("{:?}", token);
+        let tokens = scanner.scan_tokens();
+        let mut parser = parser::Parser::new(tokens.clone());
+        let expression = parser.parse().unwrap();
+        if unsafe { LOX.had_error } {
+            return;
         }
+        
+        println!("{}",ast_printer::ExprVisitor.print(&expression));
     }
 
-    pub fn error(line: i32, message: &str) {
-        Self::report(line, "", message);
+    pub fn error_at_line(line: i32, message: String) {
+        Self::report(line, "".to_string(), message);
     }
 
-    pub fn report(line: i32, location: &str, message: &str) {
+    pub fn report(line: i32, location: String, message: String) {
         eprintln!("[line {}] Error {}: {}", line, location, message);
         unsafe {
             LOX.had_error = true;
+        }
+    }
+
+    pub fn error_at_token(token: Token, message: String) {
+        if token.token_type == token_type::TokenType::EOF {
+            Self::report(token.line, " at end".to_string(), message);
+        } else {
+            Self::report(token.line, format!(" at '{}'", token.lexeme), message)
         }
     }
 }

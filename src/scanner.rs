@@ -106,7 +106,7 @@ impl Scanner {
             c if Scanner::is_digit(c) => self.number(),
             c if Scanner::is_alpha(c) => self.identifier(),
             _ => {
-                Lox::error(self.line, "Unexpected character.")
+                Lox::error_at_line(self.line, "Unexpected character.".to_string())
             }
         }
     }
@@ -133,7 +133,7 @@ impl Scanner {
         }
 
         if self.is_at_end() {
-            Lox::error(self.line, "Unterminated string.");
+            Lox::error_at_line(self.line, "Unterminated string.".to_string());
             return;
         }
 
