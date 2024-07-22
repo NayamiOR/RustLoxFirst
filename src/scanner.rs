@@ -1,35 +1,40 @@
 use std::collections::HashMap;
-use once_cell::unsync::Lazy;
 use crate::Lox;
+use lazy_static::lazy_static;
 use crate::token::Token;
 use crate::token_type::TokenType;
 use crate::token_type::TokenType::*;
 use crate::token::Literal;
 
-const Keywords: Lazy<HashMap<String, TokenType>> = Lazy::new(|| {
-    let mut mp = HashMap::new();
-    mp.insert(String::from("and"), AND);
-    mp.insert(String::from("class"), CLASS);
-    mp.insert(String::from("else"), ELSE);
-    mp.insert(String::from("false"), FALSE);
-    mp.insert(String::from("for"), FOR);
-    mp.insert(String::from("fun"), FUN);
-    mp.insert(String::from("if"), IF);
-    mp.insert(String::from("nil"), NIL);
-    mp.insert(String::from("or"), OR);
-    mp.insert(String::from("print"), PRINT);
-    mp.insert(String::from("return"), RETURN);
-    mp.insert(String::from("super"), SUPER);
-    mp.insert(String::from("this"), THIS);
-    mp.insert(String::from("true"), TRUE);
-    mp.insert(String::from("var"), VAR);
-    mp.insert(String::from("while"), WHILE);
-    mp
-});
+lazy_static! {
+    static ref KEYWORDS: HashMap<String, TokenType> = {
+        [
+            ("and", AND),
+            ("class", CLASS),
+            ("else", ELSE),
+            ("false", FALSE),
+            ("for", FOR), 
+            ("fun", FUN),
+            ("if", IF), 
+            ("nil", NIL),
+            ("or", OR),
+            ("print", PRINT),
+            ("return", RETURN),
+            ("super", SUPER),
+            ("this", THIS), 
+            ("true", TRUE), 
+            ("var", VAR), 
+            ("while", WHILE),
+        ]
+        .iter()
+        .map(|&(k, v)| (String::from(k), v))
+        .collect()
+    };
+}
 
 pub struct Scanner {
     source: String,
-    tokens:Vec<Token>,
+    tokens: Vec<Token>,
     start: i32,
     current: i32,
     line: i32,
@@ -39,14 +44,14 @@ impl Scanner {
     pub fn new(source: String) -> Scanner {
         Scanner {
             source,
-            tokens:Vec::new(),
+            tokens: Vec::new(),
             start: 0,
             current: 0,
             line: 1,
         }
     }
 
-    pub fn scan_tokens(mut self)->Vec<Token>{
+    pub fn scan_tokens(mut self) -> Vec<Token> {
         while !self.is_at_end() {
             self.start = self.current;
             self.scan_token();
@@ -114,7 +119,7 @@ impl Scanner {
             self.advance();
         }
         let text = &self.source[self.start as usize..self.current as usize];
-        let token_type = *Keywords.get(text).unwrap_or(&IDENTIFIER);
+        let token_type = *KEYWORDS.get(text).unwrap_or(&IDENTIFIER);
         match token_type {
             TRUE => self.add_token_with_literal(TRUE, Some(Literal::Bool(true))),
             FALSE => self.add_token_with_literal(FALSE, Some(Literal::Bool(false))),
