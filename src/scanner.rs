@@ -1,6 +1,4 @@
 use std::collections::HashMap;
-use std::iter::Map;
-use std::sync::OnceLock;
 use once_cell::unsync::Lazy;
 use crate::Lox;
 use crate::token::Token;
@@ -31,7 +29,7 @@ const Keywords: Lazy<HashMap<String, TokenType>> = Lazy::new(|| {
 
 pub struct Scanner {
     source: String,
-    tokens: Vec<Token>,
+    tokens:Vec<Token>,
     start: i32,
     current: i32,
     line: i32,
@@ -41,21 +39,21 @@ impl Scanner {
     pub fn new(source: String) -> Scanner {
         Scanner {
             source,
-            tokens: Vec::new(),
+            tokens:Vec::new(),
             start: 0,
             current: 0,
             line: 1,
         }
     }
 
-    pub fn scan_tokens(&mut self) -> &Vec<Token> {
+    pub fn scan_tokens(mut self)->Vec<Token>{
         while !self.is_at_end() {
             self.start = self.current;
             self.scan_token();
         }
 
         self.tokens.push(Token::new(EOF, String::from(""), None, self.line));
-        &self.tokens
+        self.tokens
     }
 
     fn is_at_end(&self) -> bool {

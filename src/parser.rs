@@ -1,16 +1,16 @@
 use crate::expr::Expr;
-use crate::{LOX, Lox};
+use crate::{Lox};
 use crate::token::{Token, Literal};
 use crate::token_type::{TokenType};
 use crate::token_type::TokenType::*;
 
 pub struct Parser {
-    tokens: Vec<Token>,
+    tokens:Vec<Token>,
     current: usize,
 }
 
 impl Parser {
-    pub fn new(tokens: Vec<Token>) -> Self {
+    pub fn new(tokens:Vec<Token>)->Self{
         Parser { tokens, current: 0 }
     }
 
