@@ -5,15 +5,20 @@ mod token;
 mod token_type;
 mod parser;
 mod value;
+mod interpreter;
+mod runtime_error;
 
 use scanner::Scanner;
 use token::Token;
+use crate::interpreter::Interpreter;
 
 struct Lox {
     had_error: bool,
+    had_runtime_error: bool,
+    interpreter: Interpreter,
 }
 
-static mut LOX: Lox = Lox { had_error: false };
+static mut LOX: Lox = Lox { had_error: false, had_runtime_error: false, interpreter: Interpreter };
 
 
 fn main() {
@@ -34,6 +39,9 @@ impl Lox {
         Self::run(source);
         if unsafe { LOX.had_error } {
             std::process::exit(65);
+        }
+        if unsafe { LOX.had_runtime_error } {
+            std::process::exit(70);
         }
         Ok(())
     }
@@ -58,8 +66,10 @@ impl Lox {
         if unsafe { LOX.had_error } {
             return;
         }
-        
-        println!("{}",ast_printer::ExprVisitor.print(&expression));
+
+        unsafe {
+            LOX.interpreter.interpret(&expression)
+        }
     }
 
     pub(crate) fn error_at_line(line: i32, message: String) {
@@ -78,6 +88,13 @@ impl Lox {
             Self::report(token.line, " at end".to_string(), message);
         } else {
             Self::report(token.line, format!(" at '{}'", token.lexeme), message)
+        }
+    }
+
+    pub(crate) fn runtime_error(error: runtime_error::RuntimeError) {
+        eprintln!("{}\n[line {}]", error.message, error.token.line);
+        unsafe {
+            LOX.had_runtime_error = true;
         }
     }
 }
