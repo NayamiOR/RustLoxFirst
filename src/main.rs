@@ -53,7 +53,7 @@ impl Lox {
         let mut scanner = Scanner::new(source);
         let tokens = scanner.scan_tokens();
         let mut parser = parser::Parser::new(tokens);
-        let expression = parser.parse().unwrap();
+        let expression = parser.parse();
         if unsafe { LOX.had_error } {
             return;
         }

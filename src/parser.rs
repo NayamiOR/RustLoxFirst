@@ -5,17 +5,17 @@ use crate::token_type::{TokenType};
 use crate::token_type::TokenType::*;
 
 pub struct Parser {
-    tokens:Vec<Token>,
+    tokens: Vec<Token>,
     current: usize,
 }
 
 impl Parser {
-    pub fn new(tokens:Vec<Token>)->Self{
+    pub fn new(tokens: Vec<Token>) -> Self {
         Parser { tokens, current: 0 }
     }
 
-    pub fn parse(&mut self) -> Result<Expr, ParseError> {
-        self.expression()
+    pub fn parse(&mut self) -> Expr {
+        self.expression().unwrap_or_else(|_| Expr::Literal { value: Literal::Nil })
     }
 
     fn expression(&mut self) -> Result<Expr, ParseError> { self.equality() }
