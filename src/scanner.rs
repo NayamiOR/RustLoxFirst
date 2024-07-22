@@ -193,7 +193,7 @@ impl Scanner {
 
     // 判断是否是字母
     fn is_alpha(c: char) -> bool {
-        (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_'
+        c.is_ascii_lowercase() || c.is_ascii_uppercase() || c == '_'
     }
 
     // 判断是否是字母或数字
@@ -203,7 +203,7 @@ impl Scanner {
 
     // 判断是否是数字
     fn is_digit(c: char) -> bool {
-        c >= '0' && c <= '9'
+        c.is_ascii_digit()
     }
 
     // 查看当前字符并将current指针后移一位
