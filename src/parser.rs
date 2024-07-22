@@ -4,17 +4,17 @@ use crate::token::{Token, Literal};
 use crate::token_type::{TokenType};
 use crate::token_type::TokenType::*;
 
-pub struct Parser {
+pub(crate) struct Parser {
     tokens: Vec<Token>,
     current: usize,
 }
 
 impl Parser {
-    pub fn new(tokens: Vec<Token>) -> Self {
+    pub(crate) fn new(tokens: Vec<Token>) -> Self {
         Parser { tokens, current: 0 }
     }
 
-    pub fn parse(&mut self) -> Expr {
+    pub(crate) fn parse(&mut self) -> Expr {
         self.expression().unwrap_or_else(|_| Expr::Literal { value: Literal::Nil })
     }
 
@@ -167,4 +167,4 @@ impl Parser {
 }
 
 #[derive(Debug)]
-pub struct ParseError;
+pub(crate) struct ParseError;

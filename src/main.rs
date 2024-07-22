@@ -4,6 +4,7 @@ mod scanner;
 mod token;
 mod token_type;
 mod parser;
+mod value;
 
 use scanner::Scanner;
 use token::Token;
@@ -28,7 +29,7 @@ fn main() {
 }
 
 impl Lox {
-    pub fn run_file(path: String) -> Result<(), std::io::Error> {
+    pub(crate) fn run_file(path: String) -> Result<(), std::io::Error> {
         let source = std::fs::read_to_string(path)?;
         Self::run(source);
         if unsafe { LOX.had_error } {
@@ -37,7 +38,7 @@ impl Lox {
         Ok(())
     }
 
-    pub fn run_prompt() -> Result<(), std::io::Error> {
+    pub(crate) fn run_prompt() -> Result<(), std::io::Error> {
         loop {
             print!("> ");
             let mut line = String::new();
@@ -49,7 +50,7 @@ impl Lox {
         }
     }
 
-    pub fn run(source: String) {
+    pub(crate) fn run(source: String) {
         let mut scanner = Scanner::new(source);
         let tokens = scanner.scan_tokens();
         let mut parser = parser::Parser::new(tokens);
@@ -61,18 +62,18 @@ impl Lox {
         println!("{}",ast_printer::ExprVisitor.print(&expression));
     }
 
-    pub fn error_at_line(line: i32, message: String) {
+    pub(crate) fn error_at_line(line: i32, message: String) {
         Self::report(line, "".to_string(), message);
     }
 
-    pub fn report(line: i32, location: String, message: String) {
+    pub(crate) fn report(line: i32, location: String, message: String) {
         eprintln!("[line {}] Error {}: {}", line, location, message);
         unsafe {
             LOX.had_error = true;
         }
     }
 
-    pub fn error_at_token(token: Token, message: String) {
+    pub(crate) fn error_at_token(token: Token, message: String) {
         if token.token_type == token_type::TokenType::EOF {
             Self::report(token.line, " at end".to_string(), message);
         } else {

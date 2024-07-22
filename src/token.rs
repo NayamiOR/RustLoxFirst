@@ -2,15 +2,15 @@ use std::fmt::Display;
 use crate::token_type::TokenType;
 
 #[derive(Debug,Clone)]
-pub struct Token{
-    pub token_type: TokenType,
-    pub lexeme: String,
-    pub literal: Option<Literal>,
-    pub line: i32,
+pub(crate) struct Token{
+    pub(crate) token_type: TokenType,
+    pub(crate) lexeme: String,
+    pub(crate) literal: Option<Literal>,
+    pub(crate) line: i32,
 }
 
 impl Token {
-    pub fn new(token_type: TokenType, lexeme:String, literal: Option<Literal>, line: i32) -> Token {
+    pub(crate) fn new(token_type: TokenType, lexeme:String, literal: Option<Literal>, line: i32) -> Token {
         Token {
             token_type,
             lexeme,
@@ -21,7 +21,7 @@ impl Token {
 }
 
 #[derive(Debug,Clone)]
-pub enum Literal {
+pub(crate) enum Literal {
     String(String),
     Number(f64),
     Bool(bool),

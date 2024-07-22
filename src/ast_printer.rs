@@ -1,10 +1,10 @@
 use crate::expr::{Expr, Visitor};
 use crate::token::Literal;
 
-pub struct ExprVisitor;
+pub(crate) struct ExprVisitor;
 
 impl ExprVisitor {
-    pub fn print(&self, expr: &Expr) -> String {
+    pub(crate) fn print(&self, expr: &Expr) -> String {
         expr.accept(self)
     }
     fn parenthesize(&self, name: &str, exprs: Vec<&Expr>) -> String {
@@ -40,7 +40,7 @@ impl Visitor<String> for ExprVisitor {
     }
 }
 
-pub fn print(expr: &Expr) -> String {
+pub(crate) fn print(expr: &Expr) -> String {
     expr.accept(&ExprVisitor)
 }
 

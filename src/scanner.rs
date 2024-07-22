@@ -32,7 +32,7 @@ lazy_static! {
     };
 }
 
-pub struct Scanner {
+pub(crate) struct Scanner {
     source: String,
     tokens: Vec<Token>,
     start: i32,
@@ -41,7 +41,7 @@ pub struct Scanner {
 }
 
 impl Scanner {
-    pub fn new(source: String) -> Scanner {
+    pub(crate) fn new(source: String) -> Scanner {
         Scanner {
             source,
             tokens: Vec::new(),
@@ -51,7 +51,7 @@ impl Scanner {
         }
     }
 
-    pub fn scan_tokens(mut self) -> Vec<Token> {
+    pub(crate) fn scan_tokens(mut self) -> Vec<Token> {
         while !self.is_at_end() {
             self.start = self.current;
             self.scan_token();
