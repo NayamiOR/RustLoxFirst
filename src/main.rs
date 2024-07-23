@@ -23,13 +23,13 @@ static mut LOX: Lox = Lox { had_error: false, had_runtime_error: false, interpre
 
 fn main() {
     let args: Vec<String> = std::env::args().collect();
-    if args.len() > 2 {
-        println!("Usage: rlox [script]");
-        std::process::exit(64);
-    } else if args.len() == 2 {
-        Lox::run_file(args[1].clone());
-    } else {
-        Lox::run_prompt();
+    match args.len() {
+        1 => Lox::run_prompt().unwrap(),
+        2 => Lox::run_file(args[1].clone()).unwrap(),
+        _ => {
+            println!("Usage: rlox [script]");
+            std::process::exit(64);
+        }
     }
 }
 
@@ -59,7 +59,7 @@ impl Lox {
     }
 
     pub(crate) fn run(source: String) {
-        let mut scanner = Scanner::new(source);
+        let scanner = Scanner::new(source);
         let tokens = scanner.scan_tokens();
         let mut parser = parser::Parser::new(tokens);
         let expression = parser.parse();

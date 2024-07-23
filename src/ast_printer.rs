@@ -28,7 +28,7 @@ impl Visitor<String> for ExprVisitor {
         self.parenthesize("group", vec![expression])
     }
 
-    fn visit_literal(&self, value: &crate::token::Literal) -> String {
+    fn visit_literal(&self, value: &Literal) -> String {
         if let Literal::Nil = value {
             return String::from("nil");
         }

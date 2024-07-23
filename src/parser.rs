@@ -85,7 +85,7 @@ impl Parser {
                 right: Box::new(right),
             });
         }
-        Ok(self.primary()?)
+        self.primary()
     }
 
     fn primary(&mut self) -> Result<Expr, ParseError> {
