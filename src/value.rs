@@ -30,6 +30,21 @@ impl std::ops::Neg for Value {
     }
 }
 
+impl std::ops::Add for Value {
+    type Output = Self;
+
+    fn add(self, other: Self) -> Self::Output {
+        match (self, other) {
+            (Value::Number(l), Value::Number(r)) => Value::Number(l + r),
+            (Value::String(mut l), Value::String(r)) => {
+                l.push_str(&r);
+                Value::String(l)
+            }
+            _ => panic!("Addition is only defined for two numbers or two strings"),
+        }
+    }
+}
+
 impl std::ops::Sub for Value {
     type Output = Self;
 
@@ -67,9 +82,11 @@ impl std::ops::Not for Value {
     type Output = Self;
 
     fn not(self) -> Self::Output {
-        match self {
-            Value::Boolean(b) => Value::Boolean(!b),
-            _ => panic!("Logical not is only defined for booleans"),
-        }
+        let b = match self {
+            Value::Boolean(b) => b,
+            Value::Nil => false,
+            _ => true,
+        };
+        Value::Boolean(!b)
     }
 }

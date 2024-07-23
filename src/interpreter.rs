@@ -19,10 +19,9 @@ impl Visitor<Result<Value, RuntimeError>> for Interpreter {
                 Ok(left_value - right_value)
             }
             TokenType::PLUS => {
-                match (left_value, right_value) {
-                    (Number(l), Number(r)) => Ok(Number(l + r)),
-                    (String(l), String(r)) => Ok(String(format!("{}{}", l, r))),
-                    _ => Err(RuntimeError::new(operator.clone(), "Operands must be two numbers or two strings.".to_string())),
+                match (&left_value, &right_value) {
+                    (Number(_), Number(_)) | (String(_), String(_)) => Ok(left_value + right_value),
+                    _ => Err(RuntimeError::new(operator.clone(), "Operands must be two numbers or two strings.".to_string()))
                 }
             }
             TokenType::SLASH => {
@@ -57,7 +56,7 @@ impl Visitor<Result<Value, RuntimeError>> for Interpreter {
                 Self::check_number_operands(operator, &left_value, &right_value)?;
                 Ok(Boolean(left_value == right_value))
             }
-            _ => { Ok(Nil) }
+            _ => unreachable!("Invalid binary operator")
         }
     }
 
