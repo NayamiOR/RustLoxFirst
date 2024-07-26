@@ -1,15 +1,68 @@
-use crate::expr::{Expr, Visitor};
+use crate::environment::Environment;
+use crate::expr::{Expr};
 use crate::runtime_error::RuntimeError;
 use crate::token::{Literal, Token};
 use crate::value::Value;
 use crate::token_type::TokenType;
 use crate::value::Value::*;
 use crate::Lox;
+use crate::stmt::Stmt;
 
-pub(crate) struct Interpreter;
+pub(crate) struct Interpreter {
+    environment: Environment,
+}
 
-impl Visitor<Result<Value, RuntimeError>> for Interpreter {
-    fn visit_binary(&self, left: &Expr, operator: &Token, right: &Expr) -> Result<Value, RuntimeError> {
+impl Interpreter {
+    pub(crate) fn new() -> Self {
+        Interpreter {
+            environment: Environment::new(),
+        }
+    }
+    pub(crate) fn interpret(&mut self, statements: Vec<Stmt>) {
+        for i in statements {
+            if let Err(e) = self.execute(&i) {
+                Lox::runtime_error(e);
+                return;
+            }
+        }
+    }
+    fn evaluate(&mut self, expr: &Expr) -> Result<Value, RuntimeError> {
+        expr.accept(self)
+    }
+
+    fn execute(&mut self, stmt: &Stmt) -> Result<(), RuntimeError> {
+        stmt.accept(self)
+    }
+
+    fn execute_block(&mut self, statements: &Vec<Stmt>, environment: Environment) -> Result<(), RuntimeError> {
+        let previous = std::mem::replace(&mut self.environment, environment);
+        for stmt in statements {
+            if let Err(e) = self.execute(stmt) {
+                self.environment = previous;
+                return Err(e);
+            }
+        }
+        self.environment = previous;
+        Ok(())
+    }
+
+    fn check_number_operand(operator: &Token, operand: &Value) -> Result<(), RuntimeError> {
+        if let Number(_) = operand {
+            return Ok(());
+        }
+        Err(RuntimeError::new(operator.clone(), "Operand must be a number.".to_string()))
+    }
+
+    fn check_number_operands(operator: &Token, left: &Value, right: &Value) -> Result<(), RuntimeError> {
+        if let (Number(_), Number(_)) = (left, right) {
+            return Ok(());
+        }
+        Err(RuntimeError::new(operator.clone(), "Operands must be numbers.".to_string()))
+    }
+}
+
+impl crate::expr::Visitor<Result<Value, RuntimeError>> for Interpreter {
+    fn visit_binary(&mut self, left: &Expr, operator: &Token, right: &Expr) -> Result<Value, RuntimeError> {
         let left_value = self.evaluate(left)?;
         let right_value = self.evaluate(right)?;
 
@@ -60,11 +113,11 @@ impl Visitor<Result<Value, RuntimeError>> for Interpreter {
         }
     }
 
-    fn visit_grouping(&self, expression: &Expr) -> Result<Value, RuntimeError> {
+    fn visit_grouping(&mut self, expression: &Expr) -> Result<Value, RuntimeError> {
         self.evaluate(expression)
     }
 
-    fn visit_literal(&self, value: &Literal) -> Result<Value, RuntimeError> {
+    fn visit_literal(&mut self, value: &Literal) -> Result<Value, RuntimeError> {
         match value {
             Literal::String(s) => Ok(String(s.clone())),
             Literal::Number(n) => Ok(Number(*n)),
@@ -73,7 +126,7 @@ impl Visitor<Result<Value, RuntimeError>> for Interpreter {
         }
     }
 
-    fn visit_unary(&self, operator: &Token, right: &Expr) -> Result<Value, RuntimeError> {
+    fn visit_unary(&mut self, operator: &Token, right: &Expr) -> Result<Value, RuntimeError> {
         let right_value = self.evaluate(right)?;
         match operator.token_type {
             TokenType::MINUS => {
@@ -86,34 +139,44 @@ impl Visitor<Result<Value, RuntimeError>> for Interpreter {
             _ => unreachable!()
         }
     }
+
+    fn visit_variable(&mut self, name: &Token) -> Result<Value, RuntimeError> {
+        match self.environment.get(name) {
+            Ok(Some(v)) => Ok(v),
+            Ok(None) => Ok(Nil),
+            Err(e) => Err(e)
+        }
+    }
+
+    fn visit_assign(&mut self, name: &Token, value: &Expr) -> Result<Value, RuntimeError> {
+        let value = self.evaluate(value)?;
+        self.environment.assign(name, value.clone())?;
+        return Ok(value);
+    }
 }
 
-impl Interpreter {
-    pub(crate) fn interpret(&self, expr: &Expr) {
-        match self.evaluate(expr) {
-            Ok(value) => {
-                println!("{}", value);
-            }
-            Err(e) => {
-                Lox::runtime_error(e);
-            }
-        }
-    }
-    fn evaluate(&self, expr: &Expr) -> Result<Value, RuntimeError> {
-        expr.accept(self)
+impl crate::stmt::Visitor<Result<(), RuntimeError>> for Interpreter {
+    fn visit_expression(&mut self, expr: &Expr) -> Result<(), RuntimeError> {
+        self.evaluate(expr)?;
+        Ok(())
     }
 
-    fn check_number_operand(operator: &Token, operand: &Value) -> Result<(), RuntimeError> {
-        if let Number(_) = operand {
-            return Ok(());
-        }
-        Err(RuntimeError::new(operator.clone(), "Operand must be a number.".to_string()))
+    fn visit_print(&mut self, expr: &Expr) -> Result<(), RuntimeError> {
+        let value = self.evaluate(expr)?;
+        println!("{}", value);
+        Ok(())
     }
 
-    fn check_number_operands(operator: &Token, left: &Value, right: &Value) -> Result<(), RuntimeError> {
-        if let (Number(_), Number(_)) = (left, right) {
-            return Ok(());
+    fn visit_var(&mut self, name: &Token, initializer: Option<&Expr>) -> Result<(), RuntimeError> {
+        let mut value = None;
+        if let Some(v) = initializer {
+            value = Some(self.evaluate(v)?);
         }
-        Err(RuntimeError::new(operator.clone(), "Operands must be numbers.".to_string()))
+        self.environment.define(name.lexeme.clone(), value);
+        Ok(())
+    }
+
+    fn visit_block(&mut self, statements: &Vec<Stmt>) -> Result<(), RuntimeError> {
+        self.execute_block(statements, Environment::new_enclosing(self.environment.clone()))
     }
 }

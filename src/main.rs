@@ -1,4 +1,4 @@
-mod ast_printer;
+// mod ast_printer;
 mod expr;
 mod scanner;
 mod token;
@@ -7,7 +7,11 @@ mod parser;
 mod value;
 mod interpreter;
 mod runtime_error;
+mod stmt;
+mod environment;
 
+use std::sync::Mutex;
+use lazy_static::lazy_static;
 use scanner::Scanner;
 use token::Token;
 use crate::interpreter::Interpreter;
@@ -18,7 +22,11 @@ struct Lox {
     interpreter: Interpreter,
 }
 
-static mut LOX: Lox = Lox { had_error: false, had_runtime_error: false, interpreter: Interpreter };
+// static mut LOX: Lox = Lazy::new(|| Lox::new());
+
+lazy_static!(
+    static ref LOX:Mutex<Lox> = Mutex::new(Lox::new());
+);
 
 
 fn main() {
@@ -34,13 +42,22 @@ fn main() {
 }
 
 impl Lox {
+    pub(crate) fn new() -> Self {
+        Lox {
+            had_error: false,
+            had_runtime_error: false,
+            interpreter: Interpreter::new(),
+        }
+    }
     pub(crate) fn run_file(path: String) -> Result<(), std::io::Error> {
         let source = std::fs::read_to_string(path)?;
         Self::run(source);
-        if unsafe { LOX.had_error } {
+        // if unsafe { LOX.had_error } {
+        if LOX.lock().unwrap().had_error {
             std::process::exit(65);
         }
-        if unsafe { LOX.had_runtime_error } {
+        // if unsafe { LOX.had_runtime_error } {
+        if LOX.lock().unwrap().had_runtime_error {
             std::process::exit(70);
         }
         Ok(())
@@ -53,7 +70,8 @@ impl Lox {
             std::io::stdin().read_line(&mut line)?;
             Self::run(line);
             unsafe {
-                LOX.had_error = false;
+                // LOX.had_error = false;
+                LOX.lock().unwrap().had_error = false;
             }
         }
     }
@@ -62,13 +80,15 @@ impl Lox {
         let scanner = Scanner::new(source);
         let tokens = scanner.scan_tokens();
         let mut parser = parser::Parser::new(tokens);
-        let expression = parser.parse();
-        if unsafe { LOX.had_error } {
+        let statements = parser.parse();
+        // if unsafe { LOX.had_error } {
+        if LOX.lock().unwrap().had_error {
             return;
         }
 
         unsafe {
-            LOX.interpreter.interpret(&expression)
+            // LOX.interpreter.interpret(statements)
+            LOX.lock().unwrap().interpreter.interpret(statements);
         }
     }
 
@@ -79,7 +99,8 @@ impl Lox {
     pub(crate) fn report(line: i32, location: String, message: String) {
         eprintln!("[line {}] Error {}: {}", line, location, message);
         unsafe {
-            LOX.had_error = true;
+            // LOX.had_error = true;
+            LOX.lock().unwrap().had_error = true;
         }
     }
 
@@ -94,7 +115,8 @@ impl Lox {
     pub(crate) fn runtime_error(error: runtime_error::RuntimeError) {
         eprintln!("{}\n[line {}]", error.message, error.token.line);
         unsafe {
-            LOX.had_runtime_error = true;
+            // LOX.had_runtime_error = true;
+            LOX.lock().unwrap().had_runtime_error = true;
         }
     }
 }

@@ -4,6 +4,7 @@ use crate::token::Literal;
 pub(crate) struct ExprVisitor;
 
 impl ExprVisitor {
+    #[allow(dead_code)]
     pub(crate) fn print(&self, expr: &Expr) -> String {
         expr.accept(self)
     }
@@ -40,10 +41,12 @@ impl Visitor<String> for ExprVisitor {
     }
 }
 
+#[allow(dead_code)]
 pub(crate) fn print(expr: &Expr) -> String {
     expr.accept(&ExprVisitor)
 }
 
+#[allow(dead_code)]
 fn parenthesize(name: &str, exprs: Vec<&Expr>) -> String {
     let mut result = String::from("(");
     result.push_str(name);
