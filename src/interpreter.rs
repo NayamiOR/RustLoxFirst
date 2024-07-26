@@ -62,7 +62,7 @@ impl Interpreter {
 }
 
 impl crate::expr::Visitor<Result<Value, RuntimeError>> for Interpreter {
-    fn visit_binary(&mut self, left: &Expr, operator: &Token, right: &Expr) -> Result<Value, RuntimeError> {
+    fn visit_binary_expr(&mut self, left: &Expr, operator: &Token, right: &Expr) -> Result<Value, RuntimeError> {
         let left_value = self.evaluate(left)?;
         let right_value = self.evaluate(right)?;
 
@@ -113,11 +113,11 @@ impl crate::expr::Visitor<Result<Value, RuntimeError>> for Interpreter {
         }
     }
 
-    fn visit_grouping(&mut self, expression: &Expr) -> Result<Value, RuntimeError> {
+    fn visit_grouping_expr(&mut self, expression: &Expr) -> Result<Value, RuntimeError> {
         self.evaluate(expression)
     }
 
-    fn visit_literal(&mut self, value: &Literal) -> Result<Value, RuntimeError> {
+    fn visit_literal_expr(&mut self, value: &Literal) -> Result<Value, RuntimeError> {
         match value {
             Literal::String(s) => Ok(String(s.clone())),
             Literal::Number(n) => Ok(Number(*n)),
@@ -126,7 +126,7 @@ impl crate::expr::Visitor<Result<Value, RuntimeError>> for Interpreter {
         }
     }
 
-    fn visit_unary(&mut self, operator: &Token, right: &Expr) -> Result<Value, RuntimeError> {
+    fn visit_unary_expr(&mut self, operator: &Token, right: &Expr) -> Result<Value, RuntimeError> {
         let right_value = self.evaluate(right)?;
         match operator.token_type {
             TokenType::MINUS => {
@@ -140,7 +140,7 @@ impl crate::expr::Visitor<Result<Value, RuntimeError>> for Interpreter {
         }
     }
 
-    fn visit_variable(&mut self, name: &Token) -> Result<Value, RuntimeError> {
+    fn visit_variable_expr(&mut self, name: &Token) -> Result<Value, RuntimeError> {
         match self.environment.get(name) {
             Ok(Some(v)) => Ok(v),
             Ok(None) => Ok(Nil),
@@ -148,7 +148,7 @@ impl crate::expr::Visitor<Result<Value, RuntimeError>> for Interpreter {
         }
     }
 
-    fn visit_assign(&mut self, name: &Token, value: &Expr) -> Result<Value, RuntimeError> {
+    fn visit_assign_expr(&mut self, name: &Token, value: &Expr) -> Result<Value, RuntimeError> {
         let value = self.evaluate(value)?;
         self.environment.assign(name, value.clone())?;
         return Ok(value);
@@ -156,18 +156,18 @@ impl crate::expr::Visitor<Result<Value, RuntimeError>> for Interpreter {
 }
 
 impl crate::stmt::Visitor<Result<(), RuntimeError>> for Interpreter {
-    fn visit_expression(&mut self, expr: &Expr) -> Result<(), RuntimeError> {
+    fn visit_expression_stmt(&mut self, expr: &Expr) -> Result<(), RuntimeError> {
         self.evaluate(expr)?;
         Ok(())
     }
 
-    fn visit_print(&mut self, expr: &Expr) -> Result<(), RuntimeError> {
+    fn visit_print_stmt(&mut self, expr: &Expr) -> Result<(), RuntimeError> {
         let value = self.evaluate(expr)?;
         println!("{}", value);
         Ok(())
     }
 
-    fn visit_var(&mut self, name: &Token, initializer: Option<&Expr>) -> Result<(), RuntimeError> {
+    fn visit_var_stmt(&mut self, name: &Token, initializer: Option<&Expr>) -> Result<(), RuntimeError> {
         let mut value = None;
         if let Some(v) = initializer {
             value = Some(self.evaluate(v)?);
@@ -176,7 +176,7 @@ impl crate::stmt::Visitor<Result<(), RuntimeError>> for Interpreter {
         Ok(())
     }
 
-    fn visit_block(&mut self, statements: &Vec<Stmt>) -> Result<(), RuntimeError> {
+    fn visit_block_stmt(&mut self, statements: &Vec<Stmt>) -> Result<(), RuntimeError> {
         self.execute_block(statements, Environment::new_enclosing(self.environment.clone()))
     }
 }
