@@ -10,6 +10,7 @@ mod runtime_error;
 mod stmt;
 mod environment;
 
+use std::io::Write;
 use std::sync::Mutex;
 use lazy_static::lazy_static;
 use scanner::Scanner;
@@ -66,6 +67,7 @@ impl Lox {
     pub(crate) fn run_prompt() -> Result<(), std::io::Error> {
         loop {
             print!("> ");
+            std::io::stdout().flush()?;
             let mut line = String::new();
             std::io::stdin().read_line(&mut line)?;
             Self::run(line);
