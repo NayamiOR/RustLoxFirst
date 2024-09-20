@@ -1,12 +1,12 @@
-use std::collections::HashMap;
 use crate::runtime_error::RuntimeError;
 use crate::token::Token;
 use crate::value::Value;
+use std::collections::HashMap;
 
-#[derive(Debug,Clone)]
+#[derive(Debug, Clone)]
 pub(crate) struct Environment {
-    values: HashMap<String, Option<Value>>,
-    enclosing: Option<Box<Environment>>,    // 外围环境
+    values: HashMap<String, Value>,      // 变量名到值的映射
+    enclosing: Option<Box<Environment>>, // 外围环境
 }
 
 impl Environment {
@@ -24,13 +24,13 @@ impl Environment {
         }
     }
 
-    pub(crate) fn define(&mut self, name: String, value: Option<Value>) {
+    pub(crate) fn define(&mut self, name: String, value: Value) {
         self.values.insert(name, value);
     }
 
     pub(crate) fn assign(&mut self, name: &Token, value: Value) -> Result<(), RuntimeError> {
         if self.values.contains_key(&name.lexeme) {
-            self.values.insert(name.lexeme.clone(), Some(value));
+            self.values.insert(name.lexeme.clone(), value);
             return Ok(());
         }
 
@@ -45,12 +45,16 @@ impl Environment {
         })
     }
 
-    pub(crate) fn get(&self, name: &Token) -> Result<Option<Value>, RuntimeError> {
+    pub(crate) fn get(&self, name: &Token) -> Result<Value, RuntimeError> {
         if let Some(v) = self.values.get(&name.lexeme) {
             return Ok(v.clone());
-        } else if let Some(enclosing) = &self.enclosing {
+        }
+        if let Some(enclosing) = &self.enclosing {
             return enclosing.get(name);
         }
-        Err(RuntimeError { token: name.clone(), message: format!("Undefined variable '{}'.", &name.lexeme) })
+        Err(RuntimeError {
+            token: name.clone(),
+            message: format!("Undefined variable '{}'.", &name.lexeme),
+        })
     }
 }
