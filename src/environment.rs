@@ -1,27 +1,30 @@
 use crate::runtime_error::RuntimeError;
 use crate::token::Token;
 use crate::value::Value;
+use std::cell::RefCell;
 use std::collections::HashMap;
+use std::ops::Deref;
+use std::rc::Rc;
 
 #[derive(Debug, Clone)]
 pub(crate) struct Environment {
-    values: HashMap<String, Value>,      // 变量名到值的映射
-    enclosing: Option<Box<Environment>>, // 外围环境
+    values: HashMap<String, Value>, // 变量名到值的映射
+    enclosing: Option<Rc<RefCell<Environment>>>,
 }
 
 impl Environment {
-    pub(crate) fn new() -> Self {
-        Environment {
+    pub(crate) fn new() -> Rc<RefCell<Self>> {
+        Rc::new(RefCell::new(Environment {
             values: HashMap::new(),
             enclosing: None,
-        }
+        }))
     }
 
-    pub(crate) fn new_enclosing(enclosing: Environment) -> Self {
-        Environment {
+    pub(crate) fn new_enclosing(enclosing: Rc<RefCell<Environment>>) -> Rc<RefCell<Self>> {
+        Rc::new(RefCell::new(Environment {
             values: HashMap::new(),
-            enclosing: Some(Box::new(enclosing)),
-        }
+            enclosing: Some(enclosing),
+        }))
     }
 
     pub(crate) fn define(&mut self, name: String, value: Value) {
@@ -35,7 +38,7 @@ impl Environment {
         }
 
         if let Some(enclosing) = &mut self.enclosing {
-            enclosing.assign(name, value)?;
+            enclosing.borrow_mut().assign(name, value)?;
             return Ok(());
         }
 
@@ -50,7 +53,7 @@ impl Environment {
             return Ok(v.clone());
         }
         if let Some(enclosing) = &self.enclosing {
-            return enclosing.get(name);
+            return enclosing.borrow().get(name);
         }
         Err(RuntimeError {
             token: name.clone(),

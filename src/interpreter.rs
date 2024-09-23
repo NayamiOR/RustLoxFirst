@@ -7,15 +7,17 @@ use crate::token_type::TokenType;
 use crate::value::Value;
 use crate::value::Value::*;
 use crate::Lox;
+use std::cell::RefCell;
+use std::rc::Rc;
 
 pub(crate) struct Interpreter {
-    environment: Box<Environment>,
+    environment: Rc<RefCell<Environment>>,
 }
 
 impl Interpreter {
     pub(crate) fn new() -> Self {
         Interpreter {
-            environment: Box::new(Environment::new()),
+            environment: Environment::new(),
         }
     }
     pub(crate) fn interpret(&mut self, statements: Vec<Stmt>) {
@@ -35,11 +37,11 @@ impl Interpreter {
     }
 
     fn execute_block(
-        mut self,
+        &mut self,
         statements: &Vec<Stmt>,
-        environment: Box<Environment>,
+        environment: Rc<RefCell<Environment>>,
     ) -> Result<(), RuntimeError> {
-        let previous = self.environment;
+        let previous = self.environment.clone();
         self.environment = environment;
         for stmt in statements {
             if let Err(e) = self.execute(stmt) {
@@ -160,13 +162,31 @@ impl crate::expr::Visitor<Result<Value, RuntimeError>> for Interpreter {
     }
 
     fn visit_variable_expr(&mut self, name: &Token) -> Result<Value, RuntimeError> {
-        self.environment.get(name)
+        self.environment.borrow().get(name)
     }
 
     fn visit_assign_expr(&mut self, name: &Token, value: &Expr) -> Result<Value, RuntimeError> {
         let value = self.evaluate(value)?;
-        self.environment.assign(name, value.clone())?;
-        return Ok(value);
+        self.environment.borrow_mut().assign(name, value.clone())?;
+        Ok(value)
+    }
+
+    fn visit_logical_expr(
+        &mut self,
+        left: &Expr,
+        operator: &Token,
+        right: &Expr,
+    ) -> Result<Value, RuntimeError> {
+        let left = self.evaluate(left)?;
+        if operator.token_type == TokenType::OR {
+            if *left.as_ref() {
+                return Ok(left);
+            }
+        } else if !*left.as_ref() {
+            return Ok(left);
+        }
+
+        self.evaluate(right)
     }
 }
 
@@ -191,7 +211,9 @@ impl crate::stmt::Visitor<Result<(), RuntimeError>> for Interpreter {
         if let Some(v) = initializer {
             value = self.evaluate(v)?;
         }
-        self.environment.define(name.lexeme.clone(), value);
+        self.environment
+            .borrow_mut()
+            .define(name.lexeme.clone(), value);
         Ok(())
     }
 
