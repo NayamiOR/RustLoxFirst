@@ -156,7 +156,7 @@ impl crate::expr::Visitor<Result<Value, RuntimeError>> for Interpreter {
                 Self::check_number_operand(operator, &right_value)?;
                 Ok(-right_value)
             }
-            TokenType::BANG => Ok(!right_value),
+            TokenType::BANG => Ok(Boolean(!right_value.as_ref())),
             _ => unreachable!(),
         }
     }

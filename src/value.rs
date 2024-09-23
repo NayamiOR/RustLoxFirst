@@ -78,15 +78,12 @@ impl std::ops::Div for Value {
     }
 }
 
-impl std::ops::Not for Value {
-    type Output = Self;
-
-    fn not(self) -> Self::Output {
-        let b = match self {
+impl AsRef<bool> for Value {
+    fn as_ref(&self) -> &bool {
+        match self {
             Value::Boolean(b) => b,
-            Value::Nil => false,
-            _ => true,
-        };
-        Value::Boolean(!b)
+            Value::Nil => &false,
+            _ => &true,
+        }
     }
 }
