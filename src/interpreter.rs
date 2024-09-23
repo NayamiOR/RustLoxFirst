@@ -223,4 +223,27 @@ impl crate::stmt::Visitor<Result<(), RuntimeError>> for Interpreter {
             Environment::new_enclosing(self.environment.clone()),
         )
     }
+
+    fn visit_if_stmt(
+        &mut self,
+        condition: &Expr,
+        then_branch: &Stmt,
+        else_branch: Option<&Stmt>,
+    ) -> Result<(), RuntimeError> {
+        if *self.evaluate(condition)?.as_ref() {
+            self.execute(then_branch)?;
+        } else if let Some(else_branch) = else_branch {
+            self.execute(else_branch)?;
+        }
+
+        Ok(())
+    }
+
+    fn visit_while_stmt(&mut self, condition: &Expr, body: &Stmt) -> Result<(), RuntimeError> {
+        while *self.evaluate(condition)?.as_ref() {
+            self.execute(body)?;
+        }
+
+        Ok(())
+    }
 }

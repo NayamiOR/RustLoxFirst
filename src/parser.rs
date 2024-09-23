@@ -48,6 +48,9 @@ impl Parser {
     }
 
     fn statement(&mut self) -> Result<Stmt, ParseError> {
+        if self.match_token(&[IF]) {
+            return self.if_statement();
+        }
         if self.match_token(&[PRINT]) {
             return self.print_statement();
         }
@@ -55,6 +58,9 @@ impl Parser {
             return Ok(Stmt::Block {
                 statements: self.block()?,
             });
+        }
+        if self.match_token(&[WHILE]) {
+            return self.while_statement();
         }
         self.expression_statement()
     }
@@ -78,6 +84,15 @@ impl Parser {
             "Expect ';' after variable declaration.".to_string(),
         )?;
         Ok(Stmt::Var { name, initializer })
+    }
+
+    fn while_statement(&mut self) -> Result<Stmt, ParseError> {
+        self.consume(LEFT_PAREN, "Expect '(' after 'while'.".to_string())?;
+        let condition = Box::new(self.expression()?);
+        self.consume(RIGHT_PAREN, "Expect ')' after condition.".to_string())?;
+        let body = Box::new(self.statement()?);
+
+        Ok(Stmt::While { condition, body })
     }
 
     fn expression_statement(&mut self) -> Result<Stmt, ParseError> {
@@ -312,6 +327,24 @@ impl Parser {
             }
             self.advance();
         }
+    }
+
+    fn if_statement(&mut self) -> Result<Stmt, ParseError> {
+        self.consume(LEFT_PAREN, "Expect '(' after 'if'.".to_string())?;
+        let condition = Box::new(self.expression()?);
+        self.consume(RIGHT_PAREN, "Expect ')' after if condition.".to_string())?;
+
+        let then_branch = Box::new(self.statement()?);
+        let else_branch = if self.match_token(&[ELSE]) {
+            Some(Box::new(self.statement()?))
+        } else {
+            None
+        };
+        Ok(Stmt::If {
+            condition,
+            then_branch,
+            else_branch,
+        })
     }
 }
 
