@@ -62,6 +62,9 @@ impl Parser {
         if self.match_token(&[WHILE]) {
             return self.while_statement();
         }
+        if self.match_token(&[FOR]) {
+            return self.for_statement();
+        }
         self.expression_statement()
     }
 
@@ -93,6 +96,74 @@ impl Parser {
         let body = Box::new(self.statement()?);
 
         Ok(Stmt::While { condition, body })
+    }
+
+    fn for_statement(&mut self) -> Result<Stmt, ParseError> {
+        // start reading the for loop header
+
+        self.consume(LEFT_PAREN, "Expect '(' after 'for'.".to_string())?;
+
+        let initializer = if self.match_token(&[SEMICOLON]) {
+            None
+        } else if self.match_token(&[VAR]) {
+            Some(self.var_declaration()?)
+        } else {
+            Some(self.expression_statement()?)
+        };
+
+        let condition = if !self.check(&SEMICOLON) {
+            Some(self.expression()?)
+        } else {
+            None
+        };
+
+        self.consume(SEMICOLON, "Expect ';' after loop condition.".to_string())?;
+        let increment = if !self.check(&RIGHT_PAREN) {
+            Some(self.expression()?)
+        } else {
+            None
+        };
+        self.consume(RIGHT_PAREN, "Expect ')' after for clauses.".to_string())?;
+
+        // end reading the for loop header
+
+        // reading the for loop body
+
+        let mut body = Box::new(self.statement()?);
+
+        // desugar
+
+        if let Some(increment) = increment {
+            body = Box::new(Stmt::Block {
+                statements: vec![
+                    *body,
+                    Stmt::Expression {
+                        expression: Box::new(increment),
+                    },
+                ],
+            });
+        }
+
+        /* Original:
+            if (condition == null) condition = new Expr.Literal(true);
+            body = new Stmt.While(condition, body);
+        */
+
+        body = Box::new(Stmt::While {
+            condition: Box::new(condition.unwrap_or_else(|| Expr::Literal {
+                value: Literal::Bool(true),
+            })),
+            body,
+        });
+
+        // if there is an initializer, wrap the body in a block with the initializer
+
+        if let Some(initializer) = initializer {
+            body = Box::new(Stmt::Block {
+                statements: vec![initializer, *body],
+            });
+        }
+        Ok(*body)
     }
 
     fn expression_statement(&mut self) -> Result<Stmt, ParseError> {

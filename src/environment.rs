@@ -3,7 +3,6 @@ use crate::token::Token;
 use crate::value::Value;
 use std::cell::RefCell;
 use std::collections::HashMap;
-use std::ops::Deref;
 use std::rc::Rc;
 
 #[derive(Debug, Clone)]
